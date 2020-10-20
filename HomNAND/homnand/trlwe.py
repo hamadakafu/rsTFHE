@@ -1,11 +1,11 @@
 from __future__ import annotations
-from homnand.util import sgn
 from random import gauss
 from typing import List, Tuple
 import random
 
 from homnand.torus import Torus01, TorusPoly, TorusVec
-from homnand import params
+from homnand.util import sgn
+from homnand import params, tlwe
 
 
 def encrypt(m: List[int]) -> Tuple[Ciphertext, List[int], TorusPoly]:
@@ -19,7 +19,7 @@ def encrypt(m: List[int]) -> Tuple[Ciphertext, List[int], TorusPoly]:
 
 def decrypt(ct: Ciphertext, s: List[int]) -> List[int]:
     m_hat: List[int] = []
-    for left, right in zip(ct.b.coef , (ct.a * s).coef):
+    for left, right in zip(ct.b.coef, (ct.a * s).coef):
         torus0505 = left.double - right.double
         torus0505 %= 1
         if torus0505 > 0.5:
@@ -28,6 +28,7 @@ def decrypt(ct: Ciphertext, s: List[int]) -> List[int]:
 
     return m_hat
 
+
 class Ciphertext:
     def __init__(self, a: TorusPoly, b: TorusPoly) -> None:
         self.a = a
@@ -35,6 +36,31 @@ class Ciphertext:
 
     def __str__(self) -> str:
         return f"a: {self.a}, b: {self.b}"
+
+    def sample_extract_index(self, k: int) -> tlwe.Ciphertext:
+        """
+        k番目のTLWE問題を作成する
+
+        Parameters
+        ----------
+        k : int
+            k番目のTLWE
+
+        Returns
+        -------
+        tlwe.Ciphertext
+            [description]
+        """
+        a = [ ]
+        N = self.a.coef.__len__()
+        for idx in range(self.a.coef.__len__()):
+            if idx <= k:
+                a.append(self.a.coef[k - idx].double)
+            else:
+                a.append(-self.a.coef[N + k - idx].double)
+
+        assert a.__len__() == self.a.coef.__len__()
+        return tlwe.Ciphertext(TorusVec(a), self.b.coef[k])
 
 
 def gen_s(n: int) -> List[int]:

@@ -1,9 +1,7 @@
-from homnand import params
-import pytest
-import random
+from hypothesis import given, settings, strategies as st
 
+from homnand import params
 from homnand.torus import Torus01, TorusVec, TorusPoly
-from hypothesis import given, note, strategies as st
 
 
 @given(st.integers(min_value=-1000, max_value=1000))

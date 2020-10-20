@@ -39,6 +39,9 @@ class Torus01:
     def __sub__(self, other: Torus01):
         return Torus01(self.double - other.double)
 
+    def __neg__(self):
+        return Torus01(-self.double)
+
     #     return Torus01(self.fix ^ other.fix / (2 ** params.w))
 
     def __mul__(self, other: Any):
