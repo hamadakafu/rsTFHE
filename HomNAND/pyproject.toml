@@ -10,10 +10,10 @@ hypothesis = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
-pytest-quickcheck = "*"
 jedi = "^0.17.2"
 rope = "*"
-black = {version = "^20.8b1", allow-prereleases = true}
+black = {version = "*", allow-prereleases = true}
+pytest-xdist = "*"
 
 [tool.poetry.scripts]
 main = "homnand:main"

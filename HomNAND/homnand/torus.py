@@ -1,8 +1,9 @@
 from __future__ import annotations
 import random
-from typing import List
+from typing import Any, List
 from homnand import torus
 from homnand import params
+
 
 class Torus01:
     """
@@ -16,9 +17,10 @@ class Torus01:
         self.fix = int(self.double * (2 ** params.w))
 
     def __str__(self) -> str:
-        return f'T(double: {self.double}, fix: {bin(self.fix)})'
+        return f"T(double: {self.double}, fix: {bin(self.fix)})"
+
     def __repr__(self) -> str:
-        return f'T(double: {self.double}, fix: {self.fix})'
+        return f"T(double: {self.double}, fix: {self.fix})"
 
     @staticmethod
     def modular_normal(alpha: float) -> Torus01:
@@ -34,11 +36,12 @@ class Torus01:
         return Torus01(self.double + other.double)
         # return Torus01(((self.fix + other.fix) & (2**params.w)) / dou(2 ** params.w))
 
-    # def __sub__(self, other: Torus01):
-    #     return Torus01(self.double - other.double)
+    def __sub__(self, other: Torus01):
+        return Torus01(self.double - other.double)
+
     #     return Torus01(self.fix ^ other.fix / (2 ** params.w))
 
-    def __mul__(self, other: int):
+    def __mul__(self, other: Any):
         """
         整数となら積が定義できる
         """
@@ -70,16 +73,17 @@ class TorusVec:
         """
         整数ベクトルとの内積
         """
-        assert(len(self.elements) == len(other))
+        assert len(self.elements) == len(other)
         acc = Torus01(0)
         for (l, r) in zip(self.elements, other):
             acc += l * r
         return acc
 
     def __str__(self) -> str:
-        return f'TorusVec: {self.elements}'
+        return f"TorusVec: {self.elements}"
+
     def __repr__(self) -> str:
-        return f'TorusVec: {self.elements}'
+        return f"TorusVec: {self.elements}"
 
 
 class TorusPoly:
@@ -87,5 +91,44 @@ class TorusPoly:
     係数がTorusの多項式
     """
 
-    def __init__(self, coef: List[Torus01]):
-        self.coef = coef
+    def __init__(self, coef: List[float]):
+        # assert len(coef) == params.N
+        ts: List[Torus01] = []
+        for e in coef:
+            ts.append(Torus01(e))
+        self.coef = ts
+
+    def __str__(self) -> str:
+        return f"TorusPoly: coef: {self.coef}"
+
+    def __repr__(self) -> str:
+        return f"TorusPoly: coef: {self.coef}"
+
+    def __add__(self, other: TorusPoly) -> TorusPoly:
+        coef: List[float] = []
+        for left, right in zip(self.coef, other.coef):
+            coef.append((left + right).double)
+        return TorusPoly(coef)
+
+    def __mul__(self, other: Any) -> TorusPoly:
+        if type(other) == int:
+            coef: List[float] = []
+            for i in range(self.coef.__len__()):
+                coef.append((self.coef[i] * other).double)
+            return TorusPoly(coef)
+
+        elif type(other) == list:
+            assert len(self.coef) == len(other)
+            size = len(other)
+            coef_t: List[Torus01] = [Torus01(0) for _ in range(2 * size)]
+            for i, ti in enumerate(self.coef):
+                for j, tj in enumerate(other):
+                    coef_t[i + j] += ti * tj
+            for idx in [size - 1 - i for i in range(size)]:
+                coef_t[idx] -= coef_t[idx + size]
+                del coef_t[idx + size]
+            assert len(coef_t) == len(other)
+            return TorusPoly(list(map(lambda x: x.double, coef_t)))
+
+        else:
+            raise RuntimeError(f"type(other): {type(other)}")
