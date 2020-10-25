@@ -21,6 +21,7 @@ pub fn encrypt(m: u32) -> (TLWE, Vec<i64>, Torus01) {
         + e;
     return (TLWE { a, b }, s, e);
 }
+
 pub fn decrypt(c: TLWE, s: Vec<i64>) -> u32 {
     let b_hat = &c.a * &s;
     let result = c.b - b_hat;

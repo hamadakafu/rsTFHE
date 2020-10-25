@@ -15,6 +15,7 @@ path = "src/main.rs"
 [dependencies]
 rand = "*"
 rand_distr = "*"
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 quickcheck = "*"

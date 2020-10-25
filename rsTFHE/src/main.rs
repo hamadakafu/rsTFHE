@@ -19,4 +19,6 @@ fn main() {
     let mut rng = rand::thread_rng();
     let hoge: Vec<u32> = (0..100).map(|_| rng.gen_range(1, 10)).collect();
     dbg!(hoge);
+    println!("{:?}", vec![rand::random::<u32>();2]);
+    println!("{:?}", (1..3).cycle().take(10).collect::<Vec<u8>>());
 }

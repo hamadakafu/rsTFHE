@@ -2,7 +2,7 @@ use rand_distr::{Distribution, Normal};
 use std::{
     cmp::Ordering,
     num::Wrapping,
-    ops::{Add, AddAssign, Mul, Neg, Sub},
+    ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign},
 };
 
 use crate::params;
@@ -59,6 +59,13 @@ impl Add<Torus01> for Torus01 {
     }
 }
 
+impl AddAssign<Torus01> for Torus01 {
+    fn add_assign(&mut self, rhs: Torus01) {
+        let tmp = *self + rhs;
+        self.fix = tmp.fix;
+        self.float = tmp.float
+    }
+}
 impl Sub<Torus01> for Torus01 {
     type Output = Self;
     fn sub(self, rhs: Torus01) -> Self::Output {
@@ -66,11 +73,11 @@ impl Sub<Torus01> for Torus01 {
     }
 }
 
-impl AddAssign<Torus01> for Torus01 {
-    fn add_assign(&mut self, rhs: Torus01) {
-        let tmp = Torus01::new_with_fix(self.fix + rhs.fix);
+impl SubAssign<Torus01> for Torus01 {
+    fn sub_assign(&mut self, rhs: Torus01) {
+        let tmp = *self + (-rhs);
         self.fix = tmp.fix;
-        self.float = tmp.float
+        self.float = tmp.float;
     }
 }
 
@@ -149,5 +156,56 @@ impl Mul<&Vec<i64>> for &Torus01Vec {
             acc += *l * *r;
         }
         return acc;
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Torus01Poly {
+    pub coef: Vec<Torus01>,
+}
+
+impl Torus01Poly {
+    pub fn new_with_fix(coef: Vec<Wrapping<u32>>) -> Self {
+        Torus01Poly {
+            coef: coef
+                .into_iter()
+                .map(|fix| Torus01::new_with_fix(fix))
+                .collect(),
+        }
+    }
+
+    pub fn new_with_torus(coef: Vec<Torus01>) -> Self {
+        Torus01Poly { coef }
+    }
+}
+
+impl Add<&Torus01Poly> for Torus01Poly {
+    type Output = Torus01Poly;
+    fn add(self, rhs: &Torus01Poly) -> Self::Output {
+        assert_eq!(self.coef.len(), rhs.coef.len());
+        let mut coef = Vec::with_capacity(self.coef.len());
+        for (l, r) in self.coef.iter().zip(rhs.coef.iter()) {
+            coef.push(*l + *r);
+        }
+        Torus01Poly { coef }
+    }
+}
+
+impl Mul<&Vec<i64>> for &Torus01Poly {
+    type Output = Torus01Poly;
+    fn mul(self, rhs: &Vec<i64>) -> Self::Output {
+        assert_eq!(self.coef.len(), rhs.len());
+        let mut coef = vec![Torus01::new_with_fix(Wrapping(0)); self.coef.len() * 2];
+        // TODO: fft使う
+        for (li, le) in self.coef.iter().enumerate() {
+            for (ri, re) in rhs.iter().enumerate() {
+                coef[li + ri] += *le * *re;
+            }
+        }
+        for i in (0..self.coef.len()).rev() {
+            let tmp = coef.pop().unwrap();
+            coef[i] -= tmp;
+        }
+        Torus01Poly::new_with_torus(coef)
     }
 }
