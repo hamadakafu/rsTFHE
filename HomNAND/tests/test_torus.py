@@ -17,7 +17,9 @@ def test_torus_eq(d):
 def test_torus_add(d1, d2):
     left = Torus01(d1)
     right = Torus01(d2)
-    assert (left + right) == Torus01(d1 + d2)
+    real = left + right
+    expect = Torus01(d1 + d2)
+    assert real == expect
 
 
 # @given(

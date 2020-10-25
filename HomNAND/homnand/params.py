@@ -11,3 +11,8 @@ mu = 1/8
 N = 1024
 #
 alpha_bk = 2 ** -25
+
+# TRGSW
+l = 3
+Bgbit = 6
+Bg = 2 ** Bgbit

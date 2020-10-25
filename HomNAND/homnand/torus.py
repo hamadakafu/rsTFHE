@@ -1,6 +1,8 @@
 from __future__ import annotations
 import random
 from typing import Any, List
+import numpy as np
+
 from homnand import torus
 from homnand import params
 
@@ -14,7 +16,7 @@ class Torus01:
     def __init__(self, d: float):
         tmp = d % 1
         self.double = tmp + 1 if tmp < 0 else tmp
-        self.fix = int(self.double * (2 ** params.w))
+        self.fix = np.array(int(self.double * (2 ** params.w)), dtype='uint32')
 
     def __str__(self) -> str:
         return f"T(double: {self.double}, fix: {bin(self.fix)})"

@@ -1,7 +1,7 @@
 from __future__ import annotations
-from random import gauss
 from typing import List, Tuple
 import random
+import numpy as np
 
 from homnand.torus import Torus01, TorusPoly, TorusVec
 from homnand.util import sgn
@@ -61,6 +61,50 @@ class Ciphertext:
 
         assert a.__len__() == self.a.coef.__len__()
         return tlwe.Ciphertext(TorusVec(a), self.b.coef[k])
+
+    def decomposition(self) -> List[List[int]]:
+        ab = _dec_helper(list(map(lambda t: t.fix, self.a.coef)), list(map(lambda t: t.fix, self.b.coef)))
+        return ab
+
+def _dec_helper(a: List[int], b: List[int], N: int = params.N, l: int = params.l, Bg: int = params.Bg, Bgbit: int = params.Bgbit) -> List[List[int]]:
+    ab = [[np.array(0, dtype='uint32') for _ in range(N)] for _ in range(l * 2)]
+    for i in range(0, l):
+        for j in range(N):
+            aij = _dec_one_helper(a[j], i + 1)
+            print('aij', aij)
+            tmp = aij +  np.array(Bg/2, dtype='uint32')
+            if i > 0:
+                # Bgbit分から溢れた分を上の階層に足す
+                ab[i - 1][j] += np.array(tmp >> Bgbit, dtype='uint32')
+            ab[i][j] = np.array((tmp & np.array((Bg - 1), dtype='uint32')) - Bg / 2, dtype='uint32')
+
+    for i in range(0, l):
+        for j in range(N):
+            bij = _dec_one_helper(b[j], i + 1)
+            tmp = bij +  np.array(Bg/2, dtype='uint32')
+            if i > 0:
+                # Bgbit分から溢れた分を上の階層に足す
+                ab[i - 1 + l][j] += np.array(tmp >> Bgbit, dtype='uint32')
+            ab[i + l][j] = np.array((tmp & (Bg - 1)) - Bg / 2, dtype='uint32')
+    return ab
+
+def _dec_one_helper(a: int, idx: int) -> int:
+    """
+    decompositionのhelper
+
+    Parameters
+    ----------
+    a : int
+        decompostionされるターゲット
+    idx : int
+        何番目のbit達を取り出すか1始まり
+    Returns
+    -------
+    int
+        [description]
+    """
+    aa = (np.array(a, dtype='uint32') >> (32 - params.Bgbit * idx)) & (params.Bg - 1)
+    return aa
 
 
 def gen_s(n: int) -> List[int]:

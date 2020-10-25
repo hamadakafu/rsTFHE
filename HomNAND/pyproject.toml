@@ -7,6 +7,7 @@ authors = ["hamadakafu <kafu.h1998@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 hypothesis = "*"
+numpy = "^1.19.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -14,9 +15,12 @@ jedi = "^0.17.2"
 rope = "*"
 black = {version = "*", allow-prereleases = true}
 pytest-xdist = "*"
+py-spy = "^0.3.3"
+neovim = "^0.3.1"
 
 [tool.poetry.scripts]
 main = "homnand:main"
+pg = "homnand:playground"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
