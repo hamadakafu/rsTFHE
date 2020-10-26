@@ -12,3 +12,8 @@ pub const n: usize = 10;
 pub const N: usize = 1024;
 /// 2 ** -25
 pub const alpha_bk: f64 = 2.9802322387695312e-08;
+
+// TRGSW
+pub const l:usize = 3;
+pub const bg:usize = 64;
+pub const bgbit: usize = 6;

@@ -93,7 +93,10 @@ impl Neg for Torus01 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Torus01::new_with_fix(Wrapping(u32::MAX) - self.fix)
+        if self.fix.0 == 0 {
+            return self;
+        }
+        Torus01::new_with_fix(Wrapping(((1 << 32) - self.fix.0 as u64) as u32))
     }
 }
 
@@ -179,15 +182,42 @@ impl Torus01Poly {
     }
 }
 
-impl Add<&Torus01Poly> for Torus01Poly {
+impl Eq for Torus01Poly {}
+
+impl PartialEq for Torus01Poly {
+    fn eq(&self, other: &Self) -> bool {
+        self.coef == other.coef
+    }
+}
+
+impl Add<&Torus01Poly> for &Torus01Poly {
     type Output = Torus01Poly;
     fn add(self, rhs: &Torus01Poly) -> Self::Output {
         assert_eq!(self.coef.len(), rhs.coef.len());
-        let mut coef = Vec::with_capacity(self.coef.len());
-        for (l, r) in self.coef.iter().zip(rhs.coef.iter()) {
-            coef.push(*l + *r);
+        Torus01Poly {
+            coef: self
+                .coef
+                .iter()
+                .zip(rhs.coef.iter())
+                .map(|(l, r)| *l + *r)
+                .collect(),
         }
-        Torus01Poly { coef }
+    }
+}
+
+impl Sub<&Torus01Poly> for &Torus01Poly {
+    type Output = Torus01Poly;
+    fn sub(self, rhs: &Torus01Poly) -> Self::Output {
+        assert_eq!(self.coef.len(), rhs.coef.len());
+
+        Torus01Poly {
+            coef: self
+                .coef
+                .iter()
+                .zip(rhs.coef.iter())
+                .map(|(l, r)| *l - *r)
+                .collect(),
+        }
     }
 }
 
@@ -195,17 +225,18 @@ impl Mul<&Vec<i64>> for &Torus01Poly {
     type Output = Torus01Poly;
     fn mul(self, rhs: &Vec<i64>) -> Self::Output {
         assert_eq!(self.coef.len(), rhs.len());
-        let mut coef = vec![Torus01::new_with_fix(Wrapping(0)); self.coef.len() * 2];
+        let mut coef = vec![Torus01::new_with_fix(Wrapping(0)); self.coef.len() * 2 - 1];
         // TODO: fft使う
         for (li, le) in self.coef.iter().enumerate() {
             for (ri, re) in rhs.iter().enumerate() {
                 coef[li + ri] += *le * *re;
             }
         }
-        for i in (0..self.coef.len()).rev() {
+        for i in (0..self.coef.len() - 1).rev() {
             let tmp = coef.pop().unwrap();
             coef[i] -= tmp;
         }
+        assert_eq!(coef.len(), self.coef.len());
         Torus01Poly::new_with_torus(coef)
     }
 }

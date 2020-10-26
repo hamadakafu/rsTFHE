@@ -1,7 +1,9 @@
-use rsTFHE::torus::Torus01;
 use std::num::Wrapping;
 use rand_distr::{Normal, Distribution};
 use rand::Rng;
+
+
+use rsTFHE::{torus::Torus01, trgsw};
 
 fn main() {
     let left = -38.03969031931551;
@@ -21,4 +23,5 @@ fn main() {
     dbg!(hoge);
     println!("{:?}", vec![rand::random::<u32>();2]);
     println!("{:?}", (1..3).cycle().take(10).collect::<Vec<u8>>());
+
 }
