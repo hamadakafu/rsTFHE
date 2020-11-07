@@ -83,6 +83,11 @@ class TorusVec:
         for (l, r) in zip(self.elements, other):
             acc += l * r
         return acc
+        assert len(self.elements) == len(other)
+        acc = Torus01(0)
+        for (l, r) in zip(self.elements, other):
+            acc += l * r
+        return acc
 
     def __str__(self) -> str:
         return f"TorusVec: {self.elements}"

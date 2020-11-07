@@ -121,7 +121,7 @@ impl Ord for Torus01 {
 
 #[derive(Debug, Clone)]
 pub struct Torus01Vec {
-    coef: Vec<Torus01>,
+    pub coef: Vec<Torus01>,
 }
 
 impl Torus01Vec {

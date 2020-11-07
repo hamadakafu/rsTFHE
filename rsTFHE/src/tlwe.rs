@@ -7,16 +7,16 @@ use crate::torus::{Torus01, Torus01Vec};
 #[cfg(test)]
 mod tests;
 
-pub fn encrypt(m: u32) -> (TLWE, Vec<i64>, Torus01) {
+pub fn encrypt(m: u32, n: usize, mu: f64) -> (TLWE, Vec<i64>, Torus01) {
     assert!(m == 0 || m == 1);
-    let a = gen_a(params::n);
-    let s = gen_s(params::n);
+    let a = gen_a(n);
+    let s = gen_s(n);
     let e = gen_e();
     let b = &a * &s
         + if m == 0 {
-            -Torus01::new_with_float(params::mu)
+            -Torus01::new_with_float(mu)
         } else {
-            Torus01::new_with_float(params::mu)
+            Torus01::new_with_float(mu)
         }
         + e;
     return (TLWE { a, b }, s, e);
@@ -41,7 +41,7 @@ pub struct TLWE {
 
 fn gen_s(size: usize) -> Vec<i64> {
     let mut rng = rand::thread_rng();
-    (0..size).map(|_| rng.gen_range(1, 2)).collect()
+    (0..size).map(|_| rng.gen_range(0, 2)).collect()
 }
 
 fn gen_a(size: usize) -> Torus01Vec {

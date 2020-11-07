@@ -32,7 +32,6 @@ impl TRGSW {
         assert!(bin == 0 || bin == 1);
         assert_eq!(2 * l, zeros.len());
         if bin == 0 {
-            dbg!("zero");
             return TRGSW {
                 H: zeros,
                 l,
@@ -50,7 +49,6 @@ impl TRGSW {
                     .collect();
                 tmp[0] = torus::Torus01::new_with_fix(Wrapping((bin as u32) << (32 - bgbit * i)));
 
-                dbg!(&tmp);
                 torus::Torus01Poly::new_with_torus(tmp)
             })
             .collect();
@@ -76,6 +74,8 @@ impl TRGSW {
             bgbit,
         }
     }
+
+    /// cmuxはtrgswが0か1かでzeroの
     pub fn cmux(self, zero: trlwe::TRLWE, one: trlwe::TRLWE) -> trlwe::TRLWE {
         &(self * &(&one - &zero)) + &zero
     }

@@ -66,6 +66,14 @@ pub struct TRLWE {
 }
 
 impl TRLWE {
+    /// 自明な暗号文の生成
+    pub fn new_obvious_with_fix(fix: Vec<Wrapping<u32>>) -> Self {
+        Self {
+            a: Torus01Poly::new_with_torus(vec![Torus01::new_with_fix(Wrapping(0)); fix.len()]),
+            b: Torus01Poly::new_with_fix(fix),
+        }
+    }
+
     /// idx番目の係数のTLWEを生成する
     pub fn sample_extract_index(self, idx: usize) -> tlwe::TLWE {
         let size = self.a.coef.len();
