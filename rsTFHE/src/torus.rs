@@ -148,6 +148,22 @@ impl Torus01Vec {
     }
 }
 
+impl AddAssign<Torus01Vec> for Torus01Vec {
+    fn add_assign(&mut self, rhs: Torus01Vec) {
+        for i in 0..self.coef.len() {
+            self.coef[i] += rhs.coef[i];
+        }
+    }
+}
+
+impl SubAssign<Torus01Vec> for Torus01Vec {
+    fn sub_assign(&mut self, rhs: Torus01Vec) {
+        for i in 0..self.coef.len() {
+            self.coef[i] -= rhs.coef[i];
+        }
+    }
+}
+
 /// 内積
 impl Mul<&Vec<i64>> for &Torus01Vec {
     type Output = Torus01;
@@ -159,6 +175,15 @@ impl Mul<&Vec<i64>> for &Torus01Vec {
             acc += *l * *r;
         }
         return acc;
+    }
+}
+
+/// スカラ倍
+impl Mul<i64> for &Torus01Vec {
+    type Output = Torus01Vec;
+
+    fn mul(self, rhs: i64) -> Self::Output {
+        Torus01Vec::new_with_torus(self.coef.into_iter().map(|t| t * rhs).collect())
     }
 }
 
