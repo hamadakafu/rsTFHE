@@ -16,6 +16,10 @@ pub const N_bit: usize = 10;
 pub const alpha_bk: f64 = 2.9802322387695312e-08;
 
 // TRGSW
-pub const l:usize = 3;
-pub const bg:usize = 64;
+pub const l: usize = 3;
+pub const bg: usize = 64;
 pub const bgbit: usize = 6;
+
+// key switch
+pub const t: usize = 8;
+pub const basebit: usize = 2;
