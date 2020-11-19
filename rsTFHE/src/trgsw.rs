@@ -32,6 +32,7 @@ impl TRGSW {
         assert!(bin == 0 || bin == 1);
         assert_eq!(2 * l, zeros.len());
         if bin == 0 {
+            dbg!("zero");
             return TRGSW {
                 H: zeros,
                 l,
@@ -108,10 +109,14 @@ impl Mul<&trlwe::TRLWE> for TRGSW {
 /// l * Nの行列
 fn decomposition(l: usize, bg: u32, bgbit: usize, p: &torus::Torus01Poly) -> Vec<Vec<i64>> {
     let size = p.coef.len();
+
+    // FIXME: ここoffset足しすぎだと思ったがどうなんだ?
+    // let offset = Wrapping(32 - l as u32 * bgbit as u32 - 1);
     let mut offset = Wrapping(0);
     for i in 1..l + 1 {
         offset += Wrapping(bg / 2 * (1 << (32 - i * bgbit)));
     }
+
     let coef: Vec<Wrapping<u32>> = p.coef.iter().map(|a_i| a_i.fix + offset).collect();
     (1..l + 1)
         .map(|i| {

@@ -5,3 +5,4 @@ pub mod trgsw;
 pub mod params;
 pub mod blind_rotate;
 pub mod key_switch;
+pub mod nand;

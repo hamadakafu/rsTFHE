@@ -38,7 +38,7 @@ fn test_sample_extract_index(m: Vec<u8>, idx: usize) -> bool {
     let s = gen_s(params::N);
     let (c, e) = encrypt_bin(m.clone(), &s);
     let tlwe = c.sample_extract_index(idx);
-    let m_idx_hat = tlwe::decrypt(tlwe, s);
+    let m_idx_hat = tlwe::decrypt(tlwe, &s);
 
     if m[idx] as u32 != m_idx_hat {
         dbg!(idx, m[idx], m_idx_hat, &m);
