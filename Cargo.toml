@@ -11,9 +11,6 @@ fft = ["rustfft"]
 
 [lib]
 crate-type = ["lib"]
-[[bin]]
-name = "main"
-path = "src/main.rs"
 
 [dependencies]
 rand = "*"
