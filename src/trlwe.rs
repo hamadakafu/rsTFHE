@@ -28,7 +28,7 @@ pub fn encrypt_bin(m: Vec<u8>, s: &Vec<i64>) -> (TRLWE, Torus01Poly) {
     (TRLWE { a, b }, e)
 }
 
-/// トーラス上の任意の固定浮動小数点を暗号化する
+/// トーラス上の任意の固定小数点を暗号化する
 /// 復号ができない
 pub fn encrypt_torus(m: Vec<u32>, s: &Vec<i64>) -> (TRLWE, Torus01Poly) {
     let N = s.len();

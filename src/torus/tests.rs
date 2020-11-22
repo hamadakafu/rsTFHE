@@ -50,9 +50,14 @@ fn test_add_float(left: f64, right: f64) -> bool {
 // }
 
 #[quickcheck]
-fn test_vec_poly(left: Vec<Wrapping<u32>>, right: Vec<i64>) -> bool {
-    if left.len() != right.len() {
+fn test_vec_poly(mut left: Vec<Wrapping<u32>>, mut right: Vec<i64>) -> bool {
+    if left.len() == 0 || right.len() == 0 {
         return true;
+    }
+    if left.len() > right.len() {
+        right = right.into_iter().cycle().take(left.len()).collect();
+    } else if left.len() < right.len() {
+        left = left.into_iter().cycle().take(right.len()).collect();
     }
     let ltv = Torus01Vec::new_with_fix(left.clone());
     let real = &ltv * &right;
@@ -69,4 +74,55 @@ fn test_vec_poly(left: Vec<Wrapping<u32>>, right: Vec<i64>) -> bool {
         dbg!(left, right, real, expect, acc);
     }
     real == expect
+}
+
+#[test]
+// TODO: なんか数字が一個ずれるバグがある
+fn test_poly_mul_fft_fjiaof() {
+    let mut left: Vec<Wrapping<u32>> = vec![Wrapping(u32::MAX - 1), Wrapping(u32::MAX - 2)];
+    let left = Torus01Poly::new_with_fix(left);
+    let mut right: Vec<i64> = vec![3, 4];
+    let expect: Vec<u32> = vec![6, 4294967279];
+    debug_assert_eq!(
+        &left * &right,
+        Torus01Poly::new_with_fix(expect.into_iter().map(|i| Wrapping(i)).collect())
+    );
+}
+
+#[quickcheck]
+fn test_poly_mul_fft(mut left: Vec<Wrapping<u32>>, mut right: Vec<i64>) -> bool {
+    if left.len() == 0 || right.len() == 0 {
+        return true;
+    }
+    let len = usize::max(
+        left.len().next_power_of_two(),
+        right.len().next_power_of_two(),
+    );
+    left = left.into_iter().cycle().take(len).collect();
+    right = right.into_iter().cycle().take(len).collect();
+    let mut left = Torus01Poly::new_with_fix(left);
+    left = Torus01Poly::new_with_torus(left.coef.iter().map(|c| *c * 1).collect());
+
+    let mut expect = vec![Torus01::new_with_fix(Wrapping(0)); left.coef.len() * 2 - 1];
+    // TODO: fft使う
+    for (li, le) in left.coef.iter().enumerate() {
+        for (ri, re) in right.iter().enumerate() {
+            expect[li + ri] += *le * *re;
+        }
+    }
+    for i in (0..left.coef.len() - 1).rev() {
+        let tmp = expect.pop().unwrap();
+        expect[i] -= tmp;
+    }
+
+    let real = &left * &right;
+    let result = real
+        .coef
+        .iter()
+        .zip(expect.iter())
+        .all(|(r, e)| (*r - *e).fix.0 < 5 || (*e - *r).fix.0 < 5);
+    if !result {
+        dbg!(left, right, &real.coef, &expect);
+    }
+    return result;
 }

@@ -1,9 +1,17 @@
 use rand_distr::{Distribution, Normal};
 use std::{
     cmp::Ordering,
+    f64::consts::PI,
     num::Wrapping,
     ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign},
 };
+
+#[cfg(feature = "fft")]
+use rustfft::num_complex::Complex;
+#[cfg(feature = "fft")]
+use rustfft::num_traits::Zero;
+#[cfg(feature = "fft")]
+use rustfft::FFTplanner;
 
 use crate::params;
 
@@ -36,7 +44,7 @@ impl Torus01 {
         }
     }
 
-    /// 32bitの固定浮動小数点として扱う
+    /// 32bitの固定小数点として扱う
     pub fn new_with_fix(fix: Wrapping<u32>) -> Self {
         Torus01 {
             fix: fix,
@@ -255,6 +263,7 @@ impl Sub<&Torus01Poly> for &Torus01Poly {
     }
 }
 
+#[cfg(not(feature = "fft"))]
 impl Mul<&Vec<i64>> for &Torus01Poly {
     type Output = Torus01Poly;
     fn mul(self, rhs: &Vec<i64>) -> Self::Output {
@@ -271,6 +280,61 @@ impl Mul<&Vec<i64>> for &Torus01Poly {
             coef[i] -= tmp;
         }
         assert_eq!(coef.len(), self.coef.len());
+        Torus01Poly::new_with_torus(coef)
+    }
+}
+
+#[cfg(feature = "fft")]
+impl Mul<&Vec<i64>> for &Torus01Poly {
+    type Output = Torus01Poly;
+    fn mul(self, rhs: &Vec<i64>) -> Self::Output {
+        let len = self.coef.len();
+        let w = Complex::new(0.0, -2.0 * PI / len as f64).exp();
+
+        let mut lfft: Vec<Complex<f64>> = self
+            .coef
+            .iter()
+            .enumerate()
+            .map(|(i, l)| w.powf(i as f64 / 2.0) * Complex::new((l.fix.0 as f64), 0.0))
+            .collect();
+        let mut lfft_out: Vec<Complex<f64>> = vec![Complex::zero(); len];
+        let mut rfft: Vec<Complex<f64>> = rhs
+            .iter()
+            .enumerate()
+            .map(|(i, r)| w.powf(i as f64 / 2.0) * Complex::new(*r as f64, 0.0))
+            .collect();
+        let mut rfft_out: Vec<Complex<f64>> = vec![Complex::zero(); len];
+
+        let mut planner = FFTplanner::new(false);
+        let fft = planner.plan_fft(len);
+        fft.process(&mut lfft, &mut lfft_out);
+        fft.process(&mut rfft, &mut rfft_out);
+
+        let mut planner = FFTplanner::new(true);
+
+        let fft = planner.plan_fft(len);
+        let mut result_fft: Vec<Complex<f64>> = lfft_out
+            .into_iter()
+            .zip(rfft_out)
+            .enumerate()
+            .map(|(i, (l, r))| l * r)
+            .collect();
+        let mut result_fft_out: Vec<Complex<f64>> = vec![Complex::zero(); len];
+        fft.process(&mut result_fft, &mut result_fft_out);
+        let coef = result_fft_out
+            .into_iter()
+            .enumerate()
+            .map(|(i, c)| {
+                let mut tmp = (c / w.powf(i as f64 / 2.0)).re.round() as i128;
+                tmp /= len as i128;
+                tmp = tmp % u32::MAX as i128;
+                if tmp < 0 {
+                    tmp = u32::MAX as i128 + tmp;
+                }
+
+                Torus01::new_with_fix(Wrapping(tmp as u32))
+            })
+            .collect();
         Torus01Poly::new_with_torus(coef)
     }
 }

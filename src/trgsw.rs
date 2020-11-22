@@ -32,7 +32,6 @@ impl TRGSW {
         assert!(bin == 0 || bin == 1);
         assert_eq!(2 * l, zeros.len());
         if bin == 0 {
-            dbg!("zero");
             return TRGSW {
                 H: zeros,
                 l,

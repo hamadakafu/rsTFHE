@@ -1,4 +1,4 @@
-// 固定浮動小数点の幅
+// 固定小数点の幅
 pub const w: usize = 32;
 
 pub const mu: f64 = 0.125;
