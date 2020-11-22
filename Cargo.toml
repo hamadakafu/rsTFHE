@@ -21,3 +21,8 @@ rustfft = { version = "^4", optional = true}
 [dev-dependencies]
 quickcheck = "*"
 quickcheck_macros = "*"
+criterion = "0.2"
+
+[[bench]]
+name = "homnand"
+harness = false
