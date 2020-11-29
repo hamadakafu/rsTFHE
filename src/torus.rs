@@ -2,10 +2,13 @@ use rand_distr::{Distribution, Normal};
 use std::{
     cmp::Ordering,
     f64::consts::PI,
+    ffi::c_void,
     num::Wrapping,
     ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign},
 };
 
+#[cfg(feature = "spqlios")]
+use once_cell::sync::Lazy;
 #[cfg(feature = "fft")]
 use rustfft::num_complex::Complex;
 #[cfg(feature = "fft")]
@@ -14,6 +17,9 @@ use rustfft::num_traits::Zero;
 use rustfft::FFTplanner;
 
 use crate::params;
+
+#[cfg(feature = "spqlios")]
+use crate::spqlios;
 
 #[cfg(test)]
 mod tests;
@@ -263,13 +269,12 @@ impl Sub<&Torus01Poly> for &Torus01Poly {
     }
 }
 
-#[cfg(not(feature = "fft"))]
+#[cfg(not(any(feature = "fft", feature = "spqlios")))]
 impl Mul<&Vec<i64>> for &Torus01Poly {
     type Output = Torus01Poly;
     fn mul(self, rhs: &Vec<i64>) -> Self::Output {
         assert_eq!(self.coef.len(), rhs.len());
         let mut coef = vec![Torus01::new_with_fix(Wrapping(0)); self.coef.len() * 2 - 1];
-        // TODO: fft使う
         for (li, le) in self.coef.iter().enumerate() {
             for (ri, re) in rhs.iter().enumerate() {
                 coef[li + ri] += *le * *re;
@@ -327,14 +332,34 @@ impl Mul<&Vec<i64>> for &Torus01Poly {
             .map(|(i, c)| {
                 let mut tmp = (c / w.powf(i as f64 / 2.0)).re.round() as i128;
                 tmp /= len as i128;
-                tmp = tmp % u32::MAX as i128;
+                tmp %= u32::MAX as i128 + 1;
                 if tmp < 0 {
-                    tmp = u32::MAX as i128 + tmp;
+                    tmp += u32::MAX as i128 + 1;
                 }
 
                 Torus01::new_with_fix(Wrapping(tmp as u32))
             })
             .collect();
         Torus01Poly::new_with_torus(coef)
+    }
+}
+
+#[cfg(feature = "spqlios")]
+static SPQLIOS_FFT_TABLE_LVL1: Lazy<Box<c_void>> =
+    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_fft_table(params::n as i32)) });
+#[cfg(feature = "spqlios")]
+static SPQLIOS_IFFT_TABLE_LVL1: Lazy<Box<c_void>> =
+    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_ifft_table(params::n as i32)) });
+#[cfg(feature = "spqlios")]
+static SPQLIOS_FFT_TABLE_LVL2: Lazy<Box<c_void>> =
+    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_fft_table(params::N as i32)) });
+#[cfg(feature = "spqlios")]
+static SPQLIOS_IFFT_TABLE_LVL2: Lazy<Box<c_void>> =
+    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_ifft_table(params::N as i32)) });
+#[cfg(feature = "spqlios")]
+impl Mul<&Vec<i64>> for &Torus01Poly {
+    type Output = Torus01Poly;
+    fn mul(self, rhs: &Vec<i64>) -> Self::Output {
+        unimplemented!();
     }
 }

@@ -8,6 +8,7 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 fft = ["rustfft"]
+spqlios = []
 
 [lib]
 crate-type = ["lib"]
@@ -15,13 +16,16 @@ crate-type = ["lib"]
 [dependencies]
 rand = "*"
 rand_distr = "*"
-lazy_static = "1.4.0"
 rustfft = { version = "^4", optional = true}
+once_cell = "*"
 
 [dev-dependencies]
 quickcheck = "*"
 quickcheck_macros = "*"
 criterion = "0.2"
+
+[build-dependencies]
+cc = { version = "1.0", features = ["parallel"] }
 
 [[bench]]
 name = "homnand"

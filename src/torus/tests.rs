@@ -104,7 +104,6 @@ fn test_poly_mul_fft(mut left: Vec<Wrapping<u32>>, mut right: Vec<i64>) -> bool 
     left = Torus01Poly::new_with_torus(left.coef.iter().map(|c| *c * 1).collect());
 
     let mut expect = vec![Torus01::new_with_fix(Wrapping(0)); left.coef.len() * 2 - 1];
-    // TODO: fft使う
     for (li, le) in left.coef.iter().enumerate() {
         for (ri, re) in right.iter().enumerate() {
             expect[li + ri] += *le * *re;

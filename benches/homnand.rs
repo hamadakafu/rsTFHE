@@ -41,9 +41,14 @@ fn nand(b1: bool, b2: bool) -> bool {
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("nand(false, true)", |b| {
-        b.iter(|| debug_assert_eq!(true, nand(false, true)))
+        b.iter(|| assert_eq!(true, nand(false, true)))
     });
 }
 
-criterion_group!(benches, criterion_benchmark);
+criterion_group!(
+    name = benches;
+    config = Criterion::default()
+        .significance_level(0.1);
+    targets = criterion_benchmark,
+);
 criterion_main!(benches);

@@ -6,6 +6,7 @@ mod tlwe;
 mod torus;
 mod trgsw;
 mod trlwe;
+pub mod spqlios;
 
 pub mod prelude {
     pub use crate::blind_rotate::blind_rotate;
