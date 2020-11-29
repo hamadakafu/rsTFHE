@@ -1,5 +1,6 @@
 use rand_distr::{Distribution, Normal};
 use std::{
+    sync::Mutex,
     cmp::Ordering,
     f64::consts::PI,
     ffi::c_void,
@@ -19,7 +20,7 @@ use rustfft::FFTplanner;
 use crate::params;
 
 #[cfg(feature = "spqlios")]
-use crate::spqlios;
+use crate::spqlios::*;
 
 #[cfg(test)]
 mod tests;
@@ -344,22 +345,102 @@ impl Mul<&Vec<i64>> for &Torus01Poly {
     }
 }
 
+struct MyBox(*mut c_void);
+unsafe impl Send for MyBox{}
+unsafe impl Sync for MyBox{}
 #[cfg(feature = "spqlios")]
-static SPQLIOS_FFT_TABLE_LVL1: Lazy<Box<c_void>> =
-    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_fft_table(params::n as i32)) });
+static SPQLIOS_FFT_TABLE_LVL1: Lazy<Mutex<MyBox>> =
+    Lazy::new(|| unsafe { Mutex::new(MyBox(new_fft_table(params::n as i32))) });
 #[cfg(feature = "spqlios")]
-static SPQLIOS_IFFT_TABLE_LVL1: Lazy<Box<c_void>> =
-    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_ifft_table(params::n as i32)) });
+static SPQLIOS_IFFT_TABLE_LVL1: Lazy<Mutex<MyBox>> =
+    Lazy::new(|| unsafe { Mutex::new(MyBox(new_ifft_table(params::n as i32))) });
 #[cfg(feature = "spqlios")]
-static SPQLIOS_FFT_TABLE_LVL2: Lazy<Box<c_void>> =
-    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_fft_table(params::N as i32)) });
+static SPQLIOS_FFT_TABLE_LVL2: Lazy<Mutex<MyBox>> =
+    Lazy::new(|| unsafe { Mutex::new(MyBox(new_fft_table(params::N as i32))) });
 #[cfg(feature = "spqlios")]
-static SPQLIOS_IFFT_TABLE_LVL2: Lazy<Box<c_void>> =
-    Lazy::new(|| unsafe { Box::from_raw(spqlios::new_ifft_table(params::N as i32)) });
+static SPQLIOS_IFFT_TABLE_LVL2: Lazy<Mutex<MyBox>> =
+    Lazy::new(|| unsafe { Mutex::new(MyBox(new_ifft_table(params::N as i32))) });
+
 #[cfg(feature = "spqlios")]
 impl Mul<&Vec<i64>> for &Torus01Poly {
     type Output = Torus01Poly;
     fn mul(self, rhs: &Vec<i64>) -> Self::Output {
-        unimplemented!();
+        debug_assert!(rhs.len() == params::n || rhs.len() == params::N);
+
+        let nn = rhs.len();
+        let mut left_tmp: Vec<f64> = (0..nn).map(|_| 0.0).collect();
+        let mut right_tmp: Vec<f64> = (0..nn).map(|_| 0.0).collect();
+        let mut real_tmp: Vec<f64> = (0..nn).map(|_| 0.0).collect();
+        let mut real: Vec<u32> = (0..nn as u32).collect();
+
+        unsafe {
+            let (fft_table, ifft_table) = {
+                if nn == params::n {
+                    let b_fft = Lazy::force(&SPQLIOS_FFT_TABLE_LVL1);
+                    (
+                        SPQLIOS_FFT_TABLE_LVL1.lock().unwrap().0,
+                        SPQLIOS_IFFT_TABLE_LVL1.lock().unwrap().0,
+                    )
+                } else {
+                    (
+                        SPQLIOS_FFT_TABLE_LVL2.lock().unwrap().0,
+                        SPQLIOS_IFFT_TABLE_LVL2.lock().unwrap().0,
+                    )
+                }
+            };
+
+            let buf_fft = fft_table_get_buffer(fft_table);
+            let buf_ifft = ifft_table_get_buffer(ifft_table);
+
+            // dbg!("before ifft");
+
+            for i in 0..nn {
+                let p = buf_ifft.offset(i as isize);
+                *p = self.coef[i as usize].fix.0 as f64;
+            }
+            ifft(ifft_table, buf_ifft);
+            for i in 0..nn {
+                let p = buf_ifft.offset(i as isize);
+                left_tmp[i as usize] = *p;
+            }
+            for i in 0..nn {
+                let p = buf_ifft.offset(i as isize);
+                *p = rhs[i as usize] as f64;
+            }
+            ifft(ifft_table, buf_ifft);
+            for i in 0..nn {
+                let p = buf_ifft.offset(i as isize);
+                right_tmp[i as usize] = *p;
+            }
+
+            // dbg!("after ifft");
+            // dbg!("before fft");
+
+            for i in 0..nn / 2 {
+                let p = buf_fft.offset(i as isize);
+                *p = left_tmp[i] * right_tmp[i] - left_tmp[i + nn / 2] * right_tmp[i + nn / 2];
+                let p = buf_fft.offset((i + nn / 2) as isize);
+                *p = left_tmp[i] * right_tmp[i + nn / 2] + left_tmp[i + nn / 2] * right_tmp[i];
+            }
+            fft(fft_table, buf_fft);
+            for i in 0..nn {
+                let p = buf_fft.offset(i as isize);
+                real_tmp[i] = *p;
+            }
+            // println!("after fft");
+        }
+        for i in 0..nn {
+            let mut tmp = real_tmp[i] as i128;
+            tmp /= nn as i128 / 2;
+            tmp %= u32::MAX as i128 + 1;
+            if tmp < 0 {
+                tmp += u32::MAX as i128 + 1;
+            }
+            assert!(0 <= tmp && tmp < u32::MAX as i128 + 1);
+            real[i] = tmp as u32;
+        }
+        // dbg!(real_tmp, real, expect);
+        // assert_eq!(expect, real);
+        Torus01Poly::new_with_fix(real.into_iter().map(|a| Wrapping(a)).collect())
     }
 }

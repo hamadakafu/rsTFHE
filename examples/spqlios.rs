@@ -62,36 +62,42 @@ fn main() {
         let buf_fft = fft_table_get_buffer(fft_table);
         let buf_ifft = ifft_table_get_buffer(ifft_table);
 
-        println!("before fft");
-
-        for i in 0..nn {
-            let p = buf_fft.offset(i as isize);
-            *p = left[i as usize] as f64;
-        }
-        fft(fft_table, buf_fft);
-        for i in 0..nn {
-            let p = buf_fft.offset(i as isize);
-            left_tmp[i as usize] = *p;
-        }
-        for i in 0..nn {
-            let p = buf_fft.offset(i as isize);
-            *p = right[i as usize] as f64;
-        }
-        fft(fft_table, buf_fft);
-        for i in 0..nn {
-            let p = buf_fft.offset(i as isize);
-            right_tmp[i as usize] = *p;
-        }
+        println!("before ifft");
 
         for i in 0..nn {
             let p = buf_ifft.offset(i as isize);
-            *p = left_tmp[i] * right_tmp[i];
+            *p = left[i as usize] as f64;
         }
         ifft(ifft_table, buf_ifft);
         for i in 0..nn {
             let p = buf_ifft.offset(i as isize);
+            left_tmp[i as usize] = *p;
+        }
+        for i in 0..nn {
+            let p = buf_ifft.offset(i as isize);
+            *p = right[i as usize] as f64;
+        }
+        ifft(ifft_table, buf_ifft);
+        for i in 0..nn {
+            let p = buf_ifft.offset(i as isize);
+            right_tmp[i as usize] = *p;
+        }
+
+        println!("after ifft");
+        println!("before fft");
+
+        for i in 0..nn / 2 {
+            let p = buf_fft.offset(i as isize);
+            *p = left_tmp[i] * right_tmp[i] - left_tmp[i + nn / 2] * right_tmp[i + nn / 2];
+            let p = buf_fft.offset((i + nn / 2) as isize);
+            *p = left_tmp[i] * right_tmp[i + nn / 2] + left_tmp[i + nn / 2] * right_tmp[i];
+        }
+        fft(fft_table, buf_fft);
+        for i in 0..nn {
+            let p = buf_fft.offset(i as isize);
             real_tmp[i] = *p;
         }
+        println!("after fft");
     }
     for i in 0..nn {
         let mut tmp = real_tmp[i] as i128;
