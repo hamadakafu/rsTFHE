@@ -2,6 +2,7 @@
 The library implements Fast Fully Homomorphic Encryption Library over the Torus in Rust.
 
 *version* 1.1.0 implements fft and using spqlios
+
 *version* 1.0.0 very slow homnand
 
 [benchmarks](https://hamadakafu.github.io/rsTFHE/report/index.html)
