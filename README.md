@@ -1,19 +1,36 @@
-https://nindanaoto.github.io
-https://blog.vippool.net/entry/2020/06/08/155013
+## rsTFHE
+The library implements Fast Fully Homomorphic Encryption Library over the Torus in Rust.
+
+*version* 1.1.0 implements fft and using spqlios
+*version* 1.0.0 very slow homnand
+
+[benchmarks](https://hamadakafu.github.io/rsTFHE/report/index.html)
+
+## How to Run
+```
+cargo run --example homnand --features=spqlios --release
+```
 
 ```sh
-cargo test --featutes -- --nocapture nand
+cargo test -- --nocapture nand
 cargo test --features=fft -- --nocapture nand
 cargo test --features=spqlios -- --nocapture nand
 cargo bench
-cargo bench --features=fft
-cargo bench --features=spqlios
+cargo bench --features=fft # (x3)
+cargo bench --features=spqlios # (x10)
 ```
 
 ## TODO
-- [x] fft
-- [x] spqliosを使う
+- [x] implements fft
+- [x] implements spqlios
 - [ ] reduce todo, fixme
-- [ ] 鍵のサイズを図ってみる
+- [ ] mesure key size
+  - bench-rs?
 
-  - https://qiita.com/nindanaoto/items/1023c1a490b818bd2ddd#tfhe%E3%81%A7spqlios%E3%82%92%E7%94%A8%E3%81%84%E3%81%A6%E3%81%84%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AE%E3%82%A2%E3%83%AB%E3%82%B4%E3%83%AA%E3%82%BA%E3%83%A0
+## References
+https://nindanaoto.github.io
+
+https://blog.vippool.net/entry/2020/06/08/155013
+
+I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. TFHE: Fast Fully Homomorphic Encryptionover the Torus. In Journal of Cryptology, volume 33, pages 34–91 (2020). [<span>PDF</span>](https://eprint.iacr.org/2018/421.pdf)
+
