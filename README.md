@@ -24,6 +24,7 @@ cargo bench --features=spqlios # (x10)
 ## TODO
 - [x] implements fft
 - [x] implements spqlios
+- [ ] compare spqlios fma, avx, unaligned
 - [ ] reduce todo, fixme
 - [ ] mesure key size
   - bench-rs?
