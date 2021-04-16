@@ -81,14 +81,14 @@ impl Neg for TLWE {
 
 pub fn gen_s(size: usize) -> Vec<i64> {
     let mut rng = rand::thread_rng();
-    (0..size).map(|_| rng.gen_range(0, 2)).collect()
+    (0..size).map(|_| rng.gen_range(0..2)).collect()
 }
 
 fn gen_a(size: usize) -> Torus01Vec {
     let mut rng = rand::thread_rng();
     Torus01Vec::new_with_fix(
         (0..size)
-            .map(|_| Wrapping(rng.gen_range(0, u32::MAX)))
+            .map(|_| Wrapping(rng.gen_range(0..u32::MAX)))
             .collect(),
     )
 }

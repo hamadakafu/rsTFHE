@@ -14,8 +14,8 @@ spqlios = []
 crate-type = ["lib"]
 
 [dependencies]
-rand = "*"
-rand_distr = "*"
+rand = "0.8"
+rand_distr = "0.4"
 rustfft = { version = "^4", optional = true}
 once_cell = "*"
 
